@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Dalamud.NET.Sdk/14.0.1">
+<Project Sdk="Dalamud.NET.Sdk/15.0.0">
   <PropertyGroup>
     <Authors>Lysneth, maintained by Khayle</Authors>
     <Company></Company>
-    <Version>0.0.16</Version>
+    <Version>0.15.0</Version>
     <Description>Better Targeting System</Description>
     <Copyright></Copyright>
     <PackageProjectUrl>https://github.com/Lynesth/BetterTargetingSystem</PackageProjectUrl>
@@ -24,10 +24,6 @@
     <Content Include="images\icon.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="DalamudPackager" Version="15.0.0" />
   </ItemGroup>
 
   <PropertyGroup>
