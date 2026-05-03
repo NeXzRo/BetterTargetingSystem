@@ -6,11 +6,12 @@
     "InternalName": "BetterTargetingSystem",
     "ApplicableVersion": "any",
     "DalamudApiLevel": 15,
-    "RepoUrl": "https://github.com/Lynesth/BetterTargetingSystem",
-    "IconUrl": "https://github.com/Lynesth/BetterTargetingSystem/raw/main/BetterTargetingSystem/images/icon.png",
+    "RepoUrl": "https://github.com/NeXzRo/BetterTargetingSystem",
+    "IconUrl": "https://raw.githubusercontent.com/NeXzRo/Repo/main/Images/BetterTargetingSystem.png",
     "Tags": [
         "Tab",
         "Target",
-        "Targeting"
+        "Targeting",
+        "PvP"
     ]
 }
