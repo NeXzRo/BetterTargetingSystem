@@ -1,3 +1,14 @@
+### Repo URL:
+```
+https://nexzro.github.io/Repo/repo.json
+```
+
+---
+
+
+Paste the URL above into Dalamud → Settings → Experimental → Custom Plugin Repositories to access every plugin at once.
+
+
 # Better Targeting System
 
 Better Targeting System is a plugin that tries to improve the way Tab targeting works.  
