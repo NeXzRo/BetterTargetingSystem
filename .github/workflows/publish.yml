@@ -32,12 +32,14 @@ jobs:
         run: dotnet restore BetterTargetingSystem/BetterTargetingSystem.csproj
 
       - name: Build Plugin
-        run: dotnet build --no-restore -c Release BetterTargetingSystem/BetterTargetingSystem.csproj `
-          -p:AssemblyVersion="${{ env.tag }}" `
-          -p:FileVersion="${{ env.tag }}" `
-          -p:PackageVersion="${{ env.tag }}" `
-          -p:InformationalVersion="${{ env.tag }}" `
-          --output ./build
+        shell: pwsh
+        run: |
+          dotnet build --no-restore -c Release BetterTargetingSystem/BetterTargetingSystem.csproj `
+            -p:AssemblyVersion="$env:tag" `
+            -p:FileVersion="$env:tag" `
+            -p:PackageVersion="$env:tag" `
+            -p:InformationalVersion="$env:tag" `
+            --output ./build
 
       - name: Create ZIP
         run: Compress-Archive -Path ./build/* -DestinationPath ./build/latest.zip
