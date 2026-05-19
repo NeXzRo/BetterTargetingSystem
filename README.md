@@ -1,9 +1,5 @@
-### Repo URL:
-```
-https://nexzro.github.io/Repo/repo.json
-```
+## Plugin Repository
 
----
+Available through the personal Dalamud repository:
 
-
-Paste the URL above into Dalamud → Settings → Experimental → Custom Plugin Repositories to access every plugin at once.
+[NeXzRo Repo](https://github.com/NeXzRo/Repo)
