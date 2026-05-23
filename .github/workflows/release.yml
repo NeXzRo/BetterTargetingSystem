@@ -100,7 +100,7 @@ jobs:
           $json[0].AssemblyVersion = $v
           $json[0].TestingAssemblyVersion = $v
           $json[0].DownloadCount = [int]'${{ steps.count.outputs.total }}'
-          $json[0] | Add-Member -NotePropertyName 'LastUpdate' -NotePropertyValue ([string][int][double]::Parse((Get-Date -UFormat %s))) -Force
+          $json[0] | Add-Member -NotePropertyName 'LastUpdate' -NotePropertyValue ([int][double]::Parse((Get-Date -UFormat %s))) -Force
           ConvertTo-Json -InputObject $json -Depth 10 -AsArray | Set-Content -Path $path -Encoding utf8
 
       - name: Commit local repo.json
