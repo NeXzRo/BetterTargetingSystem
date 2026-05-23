@@ -67,7 +67,11 @@ jobs:
           Remove-Item dalamud.zip
 
       - name: Build (Release)
-        run: dotnet build BetterTargetingSystemPvP.sln --configuration Release
+        shell: pwsh
+        run: |
+          [xml]$props = Get-Content Directory.Build.props
+          $version = $props.Project.PropertyGroup.Version
+          dotnet build BetterTargetingSystemPvP.sln --configuration Release -p:Version=$version
 
       - name: Stage latest.zip
         shell: pwsh
