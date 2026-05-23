@@ -14,7 +14,6 @@
     "IsHide": false,
     "IsTestingExclusive": false,
     "DownloadCount": 0,
-    "LastUpdate": 0,
     "LoadPriority": 0,
     "DownloadLinkInstall": "https://github.com/NeXzRo/BetterTargetingSystemPvP/releases/download/api15/BetterTargetingSystemPvP.zip",
     "DownloadLinkUpdate": "https://github.com/NeXzRo/BetterTargetingSystemPvP/releases/download/api15/BetterTargetingSystemPvP.zip",
@@ -28,6 +27,7 @@
       "Kyara",
       "Rara",
       "NeXzRo"
-    ]
+    ],
+    "LastUpdate": "1779568533"
   }
 ]
