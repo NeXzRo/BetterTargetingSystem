@@ -93,25 +93,22 @@ jobs:
 
       - name: Update local repo.json
         shell: bash
+        env:
+          VERSION: ${{ steps.tag.outputs.version }}
+          TOTAL: ${{ steps.count.outputs.total }}
         run: |
-          VERSION="${{ steps.tag.outputs.version }}"
-          TOTAL="${{ steps.count.outputs.total }}"
-          TIMESTAMP=$(date +%s)
           python3 - <<PYEOF
-          import json, os
+          import json, os, time
           with open('repo.json', 'r', encoding='utf-8-sig') as f:
               data = json.load(f)
           data[0]['AssemblyVersion'] = os.environ['VERSION']
           data[0]['TestingAssemblyVersion'] = os.environ['VERSION']
           data[0]['DownloadCount'] = int(os.environ['TOTAL'])
-          data[0]['LastUpdate'] = int(os.environ['TIMESTAMP'])
+          data[0]['LastUpdate'] = int(time.time())
           with open('repo.json', 'w', encoding='utf-8', newline='\n') as f:
               json.dump(data, f, indent=2, ensure_ascii=False)
               f.write('\n')
           PYEOF
-        env:
-          VERSION: ${{ steps.tag.outputs.version }}
-          TOTAL: ${{ steps.count.outputs.total }}
 
       - name: Commit local repo.json
         shell: bash
