@@ -92,79 +92,97 @@ jobs:
           echo "total=$total" >> "$GITHUB_OUTPUT"
 
       - name: Update local repo.json
-        shell: pwsh
+        shell: bash
         run: |
-          $v = '${{ steps.tag.outputs.version }}'
-          $path = 'repo.json'
-          $raw = [System.IO.File]::ReadAllText((Resolve-Path $path), [System.Text.Encoding]::UTF8)
-          $json = ($raw | ConvertFrom-Json)
-          $json[0].AssemblyVersion = $v
-          $json[0].TestingAssemblyVersion = $v
-          $json[0].DownloadCount = [int]'${{ steps.count.outputs.total }}'
-          $json[0] | Add-Member -NotePropertyName 'LastUpdate' -NotePropertyValue ([int][double]::Parse((Get-Date -UFormat %s))) -Force
-          [System.IO.File]::WriteAllText($path, (ConvertTo-Json -InputObject $json -Depth 10 -AsArray), [System.Text.UTF8Encoding]::new($false))
+          VERSION="${{ steps.tag.outputs.version }}"
+          TOTAL="${{ steps.count.outputs.total }}"
+          TIMESTAMP=$(date +%s)
+          python3 - <<PYEOF
+          import json, os
+          with open('repo.json', 'r', encoding='utf-8-sig') as f:
+              data = json.load(f)
+          data[0]['AssemblyVersion'] = os.environ['VERSION']
+          data[0]['TestingAssemblyVersion'] = os.environ['VERSION']
+          data[0]['DownloadCount'] = int(os.environ['TOTAL'])
+          data[0]['LastUpdate'] = int(os.environ['TIMESTAMP'])
+          with open('repo.json', 'w', encoding='utf-8', newline='\n') as f:
+              json.dump(data, f, indent=2, ensure_ascii=False)
+              f.write('\n')
+          PYEOF
+        env:
+          VERSION: ${{ steps.tag.outputs.version }}
+          TOTAL: ${{ steps.count.outputs.total }}
 
       - name: Commit local repo.json
-        shell: pwsh
+        shell: bash
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
           git add repo.json
-          if (-not (git status --porcelain)) {
-            Write-Host 'No changes to commit.'
+          if git diff --cached --quiet; then
+            echo 'No changes to commit.'
             exit 0
-          }
+          fi
           git commit -m "Release ${{ steps.tag.outputs.target }}: bump repo.json"
-          for ($i = 1; $i -le 5; $i++) {
+          for i in 1 2 3 4 5; do
             git fetch origin main
             git rebase origin/main
-            git push origin HEAD:main
-            if ($LASTEXITCODE -eq 0) { exit 0 }
-            Write-Host "Push rejected (attempt $i); retrying after rebase..."
-            Start-Sleep -Seconds 2
-          }
-          Write-Error 'Failed to push repo.json bump after 5 attempts.'
+            git push origin HEAD:main && exit 0
+            echo "Push rejected (attempt $i); retrying..."
+            sleep 2
+          done
+          echo "Failed to push repo.json bump after 5 attempts."
           exit 1
 
       - name: Mirror entry into NeXzRo/Repo
-        if: ${{ env.REPO_TOKEN != '' }}
+        shell: bash
         env:
           REPO_TOKEN: ${{ secrets.REPO_TOKEN }}
-        shell: pwsh
         run: |
-          $pat = $env:REPO_TOKEN
-          git clone --depth 1 "https://x-access-token:$pat@github.com/NeXzRo/Repo.git" hub
-          Push-Location hub
-          $raw = [System.IO.File]::ReadAllText((Resolve-Path '../repo.json'), [System.Text.Encoding]::UTF8)
-          $localEntry = ($raw | ConvertFrom-Json)[0]
-          $hubRaw = [System.IO.File]::ReadAllText((Resolve-Path 'repo.json'), [System.Text.Encoding]::UTF8)
-          $hub = ($hubRaw | ConvertFrom-Json)
-          if ($hub -isnot [array]) { $hub = @($hub) }
-          $existing = $hub | Where-Object { $_.InternalName -eq $localEntry.InternalName } | Select-Object -First 1
-          if ($existing) {
-            $idx = [Array]::IndexOf($hub, $existing)
-            $hub[$idx] = $localEntry
-          } else {
-            $hub = $hub + $localEntry
-          }
-          [System.IO.File]::WriteAllText('repo.json', (ConvertTo-Json -InputObject $hub -Depth 10 -AsArray), [System.Text.UTF8Encoding]::new($false))
+          if [ -z "$REPO_TOKEN" ]; then exit 0; fi
+          git clone --depth 1 "https://x-access-token:${REPO_TOKEN}@github.com/NeXzRo/Repo.git" hub
+          cd hub
+          python3 - <<PYEOF
+          import json
+
+          with open('../repo.json', 'r', encoding='utf-8-sig') as f:
+              local_entry = json.load(f)[0]
+
+          with open('repo.json', 'r', encoding='utf-8-sig') as f:
+              hub_data = json.load(f)
+
+          if not isinstance(hub_data, list):
+              hub_data = [hub_data]
+
+          found = False
+          for i, entry in enumerate(hub_data):
+              if entry.get('InternalName') == local_entry.get('InternalName'):
+                  hub_data[i] = local_entry
+                  found = True
+                  break
+          if not found:
+              hub_data.append(local_entry)
+
+          with open('repo.json', 'w', encoding='utf-8', newline='\n') as f:
+              json.dump(hub_data, f, indent=2, ensure_ascii=False)
+              f.write('\n')
+          PYEOF
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
           git add repo.json
-          if (-not (git status --porcelain)) {
-            Write-Host 'Hub repo.json already up to date.'
-            Pop-Location
+          if git diff --cached --quiet; then
+            echo 'Hub repo.json already up to date.'
             exit 0
-          }
-          git commit -m "Bump $($localEntry.InternalName) to $($localEntry.AssemblyVersion)"
-          for ($i = 1; $i -le 5; $i++) {
+          fi
+          INTERNAL=$(python3 -c "import json; d=json.load(open('../repo.json')); print(d[0]['InternalName'])")
+          VERSION=$(python3 -c "import json; d=json.load(open('../repo.json')); print(d[0]['AssemblyVersion'])")
+          git commit -m "Bump ${INTERNAL} to ${VERSION}"
+          for i in 1 2 3 4 5; do
             git fetch origin main
             git rebase origin/main
-            git push origin HEAD:main
-            if ($LASTEXITCODE -eq 0) { Pop-Location; exit 0 }
-            Write-Host "Hub push rejected (attempt $i); retrying after rebase..."
-            Start-Sleep -Seconds 2
-          }
-          Pop-Location
-          Write-Error 'Failed to push hub update after 5 attempts.'
+            git push origin HEAD:main && exit 0
+            echo "Push rejected (attempt $i); retrying..."
+            sleep 2
+          done
+          echo "Failed to push hub update after 5 attempts."
           exit 1
