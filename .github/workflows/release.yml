@@ -136,7 +136,7 @@ jobs:
           Push-Location hub
           $localEntry = (Get-Content -Raw -Path '../repo.json' | ConvertFrom-Json)[0]
           $hub = Get-Content -Raw -Path 'repo.json' | ConvertFrom-Json
-          $hub = @($hub)
+          if ($hub -isnot [array]) { $hub = @($hub) }
           $existing = $hub | Where-Object { $_.InternalName -eq $localEntry.InternalName } | Select-Object -First 1
           if ($existing) {
             $idx = [Array]::IndexOf($hub, $existing)
