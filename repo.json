@@ -1,9 +1,9 @@
 [
   {
-    "Author": "Lynesth, maintained by Khayle",
+    "Author": "Kyara (Fork of Lynesth maintained by Khayle)",
     "Name": "Better Targeting System PvP",
-    "Description": "A more intelligent targeting system for the game which also includes new keybinds.",
-    "Punchline": "Updated (No PvP Check) • by Kyara",
+    "Description": "A fork of the original Better Targeting System that removes the PvP check, allowing the plugin to function in all game modes",
+    "Punchline": "Better Targeting without PvP restrictions",
     "InternalName": "BetterTargetingSystemPvP",
     "AssemblyVersion": "0.15.3.12",
     "TestingAssemblyVersion": "0.15.3.12",
