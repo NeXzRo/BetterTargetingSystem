@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag to release (e.g. v1.0.0.0). Defaults to the ref this is dispatched on.'
+        description: 'Tag to release'
         required: false
         type: string
 
@@ -32,12 +32,10 @@ jobs:
             target="$ref_name"
           fi
           if [[ ! "$target" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
-            echo "::error::Resolved target '$target' is not a v*.*.* tag — pass the tag input or dispatch on a tag ref."
             exit 1
           fi
           echo "target=$target" >> "$GITHUB_OUTPUT"
           echo "version=${target#v}" >> "$GITHUB_OUTPUT"
-          echo "Releasing $target"
 
       - name: Checkout
         uses: actions/checkout@v6
@@ -46,6 +44,12 @@ jobs:
           submodules: recursive
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config --global core.autocrlf false
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
       - name: Set up .NET
         uses: actions/setup-dotnet@v5
@@ -69,7 +73,7 @@ jobs:
         shell: pwsh
         run: |
           $src = 'BetterTargetingSystemPvP/bin/x64/Release/BetterTargetingSystemPvP/latest.zip'
-          if (-not (Test-Path $src)) { throw "Plugin zip not found at $src" }
+          if (-not (Test-Path $src)) { throw "Plugin zip not found" }
           Copy-Item $src 'latest.zip' -Force
 
       - name: Create GitHub Release
@@ -113,22 +117,17 @@ jobs:
       - name: Commit local repo.json
         shell: bash
         run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email 'github-actions[bot]@users.noreply.github.com'
           git add repo.json
           if git diff --cached --quiet; then
-            echo 'No changes to commit.'
             exit 0
           fi
           git commit -m "Release ${{ steps.tag.outputs.target }}: bump repo.json"
           for i in 1 2 3 4 5; do
             git fetch origin main
-            git rebase origin/main
+            git pull --rebase -X theirs origin main
             git push origin HEAD:main && exit 0
-            echo "Push rejected (attempt $i); retrying..."
             sleep 2
           done
-          echo "Failed to push repo.json bump after 5 attempts."
           exit 1
 
       - name: Mirror entry into NeXzRo/Repo
@@ -141,16 +140,12 @@ jobs:
           cd hub
           python3 - <<PYEOF
           import json
-
           with open('../repo.json', 'r', encoding='utf-8-sig') as f:
               local_entry = json.load(f)[0]
-
           with open('repo.json', 'r', encoding='utf-8-sig') as f:
               hub_data = json.load(f)
-
           if not isinstance(hub_data, list):
               hub_data = [hub_data]
-
           found = False
           for i, entry in enumerate(hub_data):
               if entry.get('InternalName') == local_entry.get('InternalName'):
@@ -159,16 +154,12 @@ jobs:
                   break
           if not found:
               hub_data.append(local_entry)
-
           with open('repo.json', 'w', encoding='utf-8', newline='\n') as f:
               json.dump(hub_data, f, indent=2, ensure_ascii=False)
               f.write('\n')
           PYEOF
-          git config user.name 'github-actions[bot]'
-          git config user.email 'github-actions[bot]@users.noreply.github.com'
           git add repo.json
           if git diff --cached --quiet; then
-            echo 'Hub repo.json already up to date.'
             exit 0
           fi
           INTERNAL=$(python3 -c "import json; d=json.load(open('../repo.json')); print(d[0]['InternalName'])")
@@ -176,10 +167,8 @@ jobs:
           git commit -m "Bump ${INTERNAL} to ${VERSION}"
           for i in 1 2 3 4 5; do
             git fetch origin main
-            git rebase origin/main
+            git pull --rebase -X theirs origin main
             git push origin HEAD:main && exit 0
-            echo "Push rejected (attempt $i); retrying..."
             sleep 2
           done
-          echo "Failed to push hub update after 5 attempts."
           exit 1
