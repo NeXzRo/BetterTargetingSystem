@@ -3,7 +3,7 @@
     "Author": "Kyara (Fork of original by Lynesth)",
     "Name": "Better Targeting System PvP",
     "Description": "A fork of the original Better Targeting System that removes the PvP check, allowing the plugin to function in all game modes",
-    "Changelog": "Minor UI cleanup: removed leftover PvP warning.",
+    "Changelog": "",
     "Punchline": "Better Targeting without PvP restrictions",
     "InternalName": "BetterTargetingSystemPvP",
     "AssemblyVersion": "7.5.0.1",
