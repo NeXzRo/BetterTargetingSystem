@@ -134,45 +134,15 @@ jobs:
           done
           exit 1
 
-      - name: Mirror entry into NeXzRo/Repo
+      - name: Notify NeXzRo/Repo to regenerate
         shell: bash
         env:
           REPO_TOKEN: ${{ secrets.REPO_TOKEN }}
         run: |
           if [ -z "$REPO_TOKEN" ]; then exit 0; fi
-          git clone --depth 1 "https://x-access-token:${REPO_TOKEN}@github.com/NeXzRo/Repo.git" hub
-          cd hub
-          python3 - <<PYEOF
-          import json
-          with open('../repo.json', 'r', encoding='utf-8-sig') as f:
-              local_entry = json.load(f)[0]
-          with open('repo.json', 'r', encoding='utf-8-sig') as f:
-              hub_data = json.load(f)
-          if not isinstance(hub_data, list):
-              hub_data = [hub_data]
-          found = False
-          for i, entry in enumerate(hub_data):
-              if entry.get('InternalName') == local_entry.get('InternalName'):
-                  hub_data[i] = local_entry
-                  found = True
-                  break
-          if not found:
-              hub_data.append(local_entry)
-          with open('repo.json', 'w', encoding='utf-8', newline='\n') as f:
-              json.dump(hub_data, f, indent=2, ensure_ascii=False)
-              f.write('\n')
-          PYEOF
-          git add repo.json
-          if git diff --cached --quiet; then
-            exit 0
-          fi
-          INTERNAL=$(python3 -c "import json; d=json.load(open('../repo.json')); print(d[0]['InternalName'])")
-          VERSION=$(python3 -c "import json; d=json.load(open('../repo.json')); print(d[0]['AssemblyVersion'])")
-          git commit -m "Bump ${INTERNAL} to ${VERSION}"
-          for i in 1 2 3 4 5; do
-            git fetch origin main
-            git pull --rebase --autostash -X theirs origin main
-            git push origin HEAD:main && exit 0
-            sleep 2
-          done
-          exit 1
+          curl -s -X POST \
+            -H "Authorization: Bearer ${REPO_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/NeXzRo/Repo/dispatches \
+            -d '{"event_type":"plugin-released","client_payload":{"plugin":"BetterTargetingSystemPvP"}}'
